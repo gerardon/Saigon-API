@@ -27,12 +27,11 @@ class BaseRepository:
     def collection(self):
         return self.connector.database[self.collection_name]
 
-    def retrieve_one(self, id=None):
-        query = {}
+    def retrieve_one(self, id=None, extra_qs={}):
         if id:
-            query['_id'] = id
+            extra_qs['_id'] = id
 
-        return self.collection.find_one(query)
+        return self.collection.find_one(extra_qs)
 
     def replace(self, obj, id=None):
         query = {}
@@ -41,12 +40,12 @@ class BaseRepository:
 
         return self.collection.replace_one(query, obj)
 
+    def count(self):
+        return self.collection.count()
+
 
 class GameRepository(BaseRepository):
     collection_name = 'games'
-
-    def count(self):
-        return self.collection.count()
 
     def new(self, start_team, words):
         # remove o jogo antigo
@@ -109,28 +108,34 @@ class GameRepository(BaseRepository):
 class WordRepository(BaseRepository):
     collection_name = 'words'
 
+    def retrieve_one(self, word=None, *args, **kwargs):
+        extra_qs = {}
+        if word:
+            extra_qs['word'] = word
+
+        return super(WordRepository, self).retrieve_one(*args, extra_qs=extra_qs, **kwargs)
+
     def all(self):
         return [word for word in self.collection.find()]
 
+    def new(self, word, alignment):
+        result = self.collection.insert_one(self.proccess_word(word, alignment))
+        return self.retrieve_one(id=result.inserted_id)
+
     def bulk_new(self, words):
-        result = self.collection.insert_many(self.proccess_words(words))
+        words = [self.proccess_word(w['word'], w['alignment']) for w in words]
+        result = self.collection.insert_many(words)
         return self.all()
 
-    def proccess_words(self, words):
-        return [
-            {
-                'word': word['word'],
-                'alignment': word['alignment'],
-                'public_alignment': None
-            }
-            for word in words
-        ]
+    def proccess_word(self, word, alignment):
+        return {
+            'word': word,
+            'alignment': alignment,
+            'public': False,
+        }
 
     def publish_word(self, word):
-        word = self.retrieve_one(word=word)
-        word = self.collection.find_one({'_id': obj_id})
-        word['public_alignment'] = word['alignment']
+        word = self.collection.update_one({'word': word}, {'$set': {'public': True}})
 
-        self.replace(word, id=obj_id)
 
 

@@ -120,5 +120,46 @@ class GameRepositoryTestCase(PyMongoTestCase):
         self.assertEqual(game['turn'], 'blue')
 
 
-if __name__ == '__main__':
-    unittest.main()
+class WordRepositoryTestCase(PyMongoTestCase):
+    def setUp(self):
+        self.repository = WordRepository()
+
+    def test_bulk_new_should_insert_word_list_and_return_docs(self):
+        word_docs = self.repository.bulk_new([
+            {'word': 'word_{}'.format(i), 'alignment': 'red'}
+            for i in range(5)
+        ])
+
+        self.assertEqual(self.repository.count(), 5)
+
+        for word in word_docs:
+            self.assertIn('_id', word)
+
+    def test_all_returns_a_word_list(self):
+        self.repository.bulk_new([
+            {'word': 'word_{}'.format(i), 'alignment': 'red'}
+            for i in range(5)
+        ])
+
+        self.assertIsInstance(self.repository.all(), list)
+
+    @patch.object(WordRepository, 'proccess_word')
+    def test_new_calls_proccess_words_and_inserts(self, patched_proccess):
+        patched_proccess.return_value = {'galinha': True}
+
+        word = self.repository.new('soueto', 'red')
+
+        self.assertIn('galinha', word)
+        self.assertIn('_id', word)
+        self.assertTrue(word['galinha'])
+
+
+    def test_publish_word_makes_its_alignment_public(self):
+        word = self.repository.new('soueto', 'red')
+        self.assertFalse(word['public'])
+
+        self.repository.publish_word('soueto')
+
+        word = self.repository.retrieve_one(word='soueto')
+        self.assertTrue(word['public'])
+
