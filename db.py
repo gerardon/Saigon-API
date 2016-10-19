@@ -72,10 +72,10 @@ class GameRepository(BaseRepository):
     def retrieve_one(self, *args, **kwargs):
         game = super(GameRepository, self).retrieve_one(*args, **kwargs)
 
-        voting_expires_at = game.get('voting_expires_at')
-        if voting_expires_at and voting_expires_at < datetime.now():
-            self.count_votes(game['votes'])
-            #####
+        if game:
+            voting_expires_at = game.get('voting_expires_at')
+            if voting_expires_at and voting_expires_at < datetime.now():
+                self.count_votes(game['votes'])
 
         return game
 
@@ -102,10 +102,14 @@ class GameRepository(BaseRepository):
         if counter[''] > total_votes // 2:
             self.end_turn()
         else:
-
             word, votes = counter.most_common()[0]
 
-            WordRepository().publish_word(word)
+            word_repository = WordRepository()
+            word_repository.publish_word(word)
+            words = word_repository.all()
+            game = self.retrieve_one()
+            game['words'] = words
+            self.replace(game)
 
 
 class WordRepository(BaseRepository):
