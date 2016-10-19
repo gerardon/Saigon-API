@@ -122,9 +122,3 @@ class GameRepositoryTestCase(PyMongoTestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-    #self.words = []
-    #self.words.extend([build_word(i, 'red') for i in range(9)])
-    #self.words.extend([build_word(i, 'blue') for i in range(8)])
-    #self.words.extend([build_word(i, 'civil') for i in range(7)])
-    #self.words.extend([build_word(i, 'killer') for i in range(1)])
