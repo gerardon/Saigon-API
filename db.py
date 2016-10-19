@@ -1,3 +1,6 @@
+import json
+import datetime
+from bson import ObjectId
 from collections import Counter
 from datetime import datetime, timedelta
 from pymongo import MongoClient
@@ -138,4 +141,14 @@ class WordRepository(BaseRepository):
         word = self.collection.update_one({'word': word}, {'$set': {'public': True}})
 
 
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        if isinstance(o, datetime):
+            return o.isoformat()
+        return json.JSONEncoder.default(self, o)
 
+
+def json_encode(value):
+    return JSONEncoder().encode(value)
