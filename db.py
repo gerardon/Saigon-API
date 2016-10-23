@@ -9,7 +9,7 @@ from pymongo import MongoClient
 class SaigonConnector:
 
     def __init__(self):
-        self.client = MongoClient('localhost', 27017)
+        self.client = MongoClient('localhost', 27017, socketKeepAlive=True)
 
     @property
     def database(self):
@@ -50,11 +50,18 @@ class BaseRepository:
 class GameRepository(BaseRepository):
     collection_name = 'games'
 
+    @classmethod
+    def get_start_team(cls, words):
+        counter = Counter([b['alignment'] for b in words])
+        return counter.most_common()[0][0]
+
     def new(self, start_team, words):
         # remove o jogo antigo
         self.delete()
 
-        words = WordRepository().bulk_new(words)
+        wr = WordRepository()
+        wr.collection.delete_many({})
+        words = wr.bulk_new(words)
 
         result = self.collection.insert_one(
             {
@@ -99,6 +106,9 @@ class GameRepository(BaseRepository):
         total_votes = len(votes)
         counter = Counter(votes)
 
+        if not counter:
+            return
+
         if counter[''] > total_votes // 2:
             self.end_turn()
         else:
@@ -110,6 +120,14 @@ class GameRepository(BaseRepository):
             game = self.retrieve_one()
             game['words'] = words
             self.replace(game)
+
+    def compute_votes(self, game=None):
+        game = self.retrieve_one(game or {})
+        if not game:
+            return
+
+        self.count_votes(game['votes'])
+        self.end_turn()
 
 
 class WordRepository(BaseRepository):
