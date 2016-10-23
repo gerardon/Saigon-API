@@ -1,9 +1,7 @@
-RED_TEAM = 'red_team'
-BLUE_TEAM = 'blue_team'
+RED_TEAM = 'red'
+BLUE_TEAM = 'blue'
 CIVIL = 'civil'
 KILLER = 'killer'
-
-status = {'turn': RED_TEAM, 'voting_expires_at': None}
 
 board = [
     {'word': 'Fonte', 'alignment': RED_TEAM},
@@ -63,3 +61,10 @@ public_board = [
     {'word': 'Atlântida', 'alignment': None},
     {'word': 'Dragão', 'alignment': None},
 ]
+
+
+def load_game():
+    from db import GameRepository
+    start_team = GameRepository.get_start_team(board)
+    gr = GameRepository()
+    gr.new(start_team, board)
