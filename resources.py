@@ -2,7 +2,7 @@ import falcon
 import urllib
 
 from db import GameRepository, json_encode
-from components import Board
+from fixtures import board
 
 
 class BaseResource(object):
@@ -35,8 +35,8 @@ class BoardResource(BaseResource):
 class NewGameResource(BaseResource):
     def on_get(self, req, resp):
         gr = GameRepository()
-        board = Board()
-        self.set_body(resp, gr.new(board.start_team, board._board))
+        start_team = GameRepository.get_start_team(board)
+        self.set_body(resp, gr.new(start_team, board))
 
 
 class StartTurnResource(BaseResource):
@@ -56,11 +56,17 @@ class VoteResource(BaseResource):
 
     def validate(self, req, resp):
         if not req.params.get('word'):
-            self.set_error(resp, 'You should send a "word" parameter')
-            return False
+            req.params['word'] = ''
 
         if not req.params.get('user'):
             self.set_error(resp, 'You should send a "user" parameter')
             return False
 
         return True
+
+
+class ComputeVotesResource(BaseResource):
+    def on_get(self, req, resp):
+        gr = GameRepository()
+        gr.compute_votes()
+        raise falcon.HTTPFound(self.get_url(req, 'board'))
