@@ -68,3 +68,13 @@ def load_game():
     start_team = GameRepository.get_start_team(board)
     gr = GameRepository()
     gr.new(start_team, board)
+
+
+def set_winner(game, team):
+    from db import GameRepository, WordRepository
+    wr = WordRepository()
+    gr = GameRepository()
+    wr.collection.update_many({'alignment': team}, {'$set': {'public': True}})
+    game = gr.retrieve_one(game)
+    game['words'] = wr.all()
+    gr.replace(game)
