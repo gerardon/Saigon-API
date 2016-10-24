@@ -103,11 +103,8 @@ class GameRepositoryTestCase(PyMongoTestCase):
         self.start_game_fixture()
         self.repository.vote(uuid4(), '')
         self.repository.vote(uuid4(), '')
-        self.repository.vote(uuid4(), 'red_word_0')
-
-        game = self.repository.retrieve_one()
-
-        self.repository.count_votes(game['votes'])
+        self.repository.vote(uuid4(), 'blue_word_0')
+        self.repository.compute_votes()
         end_mocked.assert_called_once_with()
 
     def test_end_turn_should_toggle_the_turn(self):

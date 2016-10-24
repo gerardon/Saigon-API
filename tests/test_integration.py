@@ -112,3 +112,31 @@ class TestOneTurn(BaseIntegrationTest):
             filter(lambda x: x['public'] is True, body['words']))
         self.assertEqual(public_words, [])
         self.assertEqual(body['turn'], 'blue')
+
+    def test_if_guess_right_team_can_keep_playing(self):
+        """ If the team guess right it can continue playing """
+        self.new_game()
+        self.start_turn()
+
+        body = self.get_board()
+        team = body['turn']
+
+        self.vote({'user': 'a', 'word': 'Tomada'})
+
+        self.compute_votes()
+        body = self.get_board()
+        self.assertEqual(body['turn'], team)
+
+    def test_if_guess_wrong_turn_should_finish(self):
+        """ If the team guess right it can continue playing """
+        self.new_game()
+        self.start_turn()
+
+        body = self.get_board()
+        team = body['turn']
+
+        self.vote({'user': 'a', 'word': 'Presunto'})
+
+        self.compute_votes()
+        body = self.get_board()
+        self.assertNotEqual(body['turn'], team)
