@@ -70,3 +70,10 @@ class ComputeVotesResource(BaseResource):
         gr = GameRepository()
         gr.compute_votes()
         raise falcon.HTTPFound(self.get_url(req, 'board'))
+
+
+class WinnerResource(BaseResource):
+    def on_get(self, req, resp):
+        gr = GameRepository()
+        winner = gr.who_is_the_winner() or ''
+        self.set_body(resp, {'winner': winner})

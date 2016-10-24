@@ -2,8 +2,8 @@ import json
 import urllib
 from falcon.testing import TestCase
 from resources import (BoardResource, StartTurnResource, VoteResource,
-                       ComputeVotesResource)
-from fixtures import load_game
+                       ComputeVotesResource, WinnerResource)
+from fixtures import load_game, set_winner
 from app import api_setup
 
 
@@ -69,3 +69,19 @@ class TestComputeVotesResource(BaseTest):
     def test_vote_should_return_302(self):
         response = self.simulate_get(self.path)
         self.assertEqual(response.status_code, 302)
+
+
+class TestWinnerResource(BaseTest):
+    path = '/who_is_the_winner'
+    resource = WinnerResource
+
+    def test_winner_should_return_200(self):
+        response = self.simulate_get(self.path)
+        self.assertEqual(response.status_code, 200)
+
+    def test_winner_should_be_right(self):
+        load_game()
+        set_winner({}, 'red')
+        response = self.simulate_get(self.path)
+        winner = self.body_as_json(response)
+        self.assertEqual(winner, {'winner': 'red'})
